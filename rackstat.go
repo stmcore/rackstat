@@ -5,8 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/get-stream-origin/digestauth"
-	"github.com/init-data-origin/initdataorigin"
+	"github.com/stmcore/digestauth"
+	"github.com/stmcore/initdataorigin"
 )
 
 type Racks struct {
