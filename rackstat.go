@@ -85,7 +85,7 @@ func (self *Racks) GetStatMachine(rackName string, machine *[]Machine, wg *sync.
 			lastTwoIP := strings.Join(arrIP[len(arrIP)-2:], ".")
 
 			url := "http://" + server.IP + ":8087/v2/machine/monitoring/current"
-			data, err := digest.GetInfo(url, "sysadm", "1down2go@"+lastTwoIP, "GET")
+			data, err := digest.GetInfo(url, "sysadm", "C0rE#"+lastTwoIP, "GET")
 
 			if err != nil {
 				//log.Println(err)
