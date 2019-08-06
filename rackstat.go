@@ -9,20 +9,36 @@ import (
 	"github.com/stmcore/initdataorigin"
 )
 
-type Racks struct {
+//Sites data
+type Sites struct {
+	Site []Site
+}
+
+//Site data
+type Site struct {
+	Name  string
 	Racks []Rack
 }
 
+//Racks data
+// type Racks struct {
+// 	Racks []Rack
+// }
+
+//Rack data
 type Rack struct {
 	Name     string
 	Machines []Machine
 }
+
+//Machine data
 type Machine struct {
 	Name string
 	IP   string
 	Stat CurrentMachineStatistics
 }
 
+//CurrentMachineStatistics data
 type CurrentMachineStatistics struct {
 	ServerUptime    int32 `xml:"ServerUptime"`
 	CPUIdle         int32 `xml:"CpuIdle"`
@@ -37,7 +53,8 @@ type CurrentMachineStatistics struct {
 	ConnectionCount int32 `xml:"ConnectionCount"`
 }
 
-func (self *Racks) GetAllRackName() []string {
+//GetAllSiteName uniq site name
+func (sites *Sites) GetAllSiteName() []string {
 	//c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	var initdata initdataorigin.DataOrigins
 	servers := initdata.GetServers()
@@ -45,9 +62,9 @@ func (self *Racks) GetAllRackName() []string {
 	list := []string{}
 
 	for _, server := range servers {
-		if _, value := keys[server.Rack]; !value {
-			keys[server.Rack] = true
-			list = append(list, server.Rack)
+		if _, value := keys[server.Site]; !value {
+			keys[server.Site] = true
+			list = append(list, server.Site)
 		}
 	}
 
@@ -55,7 +72,48 @@ func (self *Racks) GetAllRackName() []string {
 	//c.JSON(http.StatusOK, gin.H{"RackName": list})
 }
 
-func (self *Racks) GetStatMachine(rackName string, machine *[]Machine, wg *sync.WaitGroup) {
+//GetAllRackName uniq rack name
+// func (sites *Sites) GetAllRackName() []string {
+// 	//c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+// 	var initdata initdataorigin.DataOrigins
+// 	servers := initdata.GetServers()
+// 	keys := make(map[string]bool)
+// 	list := []string{}
+
+// 	for _, server := range servers {
+// 		if _, value := keys[server.Rack]; !value {
+// 			keys[server.Rack] = true
+// 			list = append(list, server.Rack)
+// 		}
+// 	}
+
+// 	return list
+// 	//c.JSON(http.StatusOK, gin.H{"RackName": list})
+// }
+
+//GetRackNameBySite get rack name by site name
+func (sites *Sites) GetRackNameBySite(siteName string) []string {
+	//c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	var initdata initdataorigin.DataOrigins
+	servers := initdata.GetServers()
+	keys := make(map[string]bool)
+	list := []string{}
+
+	for _, server := range servers {
+		if server.Site == siteName {
+			if _, value := keys[server.Rack]; !value {
+				keys[server.Rack] = true
+				list = append(list, server.Rack)
+			}
+		}
+	}
+
+	return list
+	//c.JSON(http.StatusOK, gin.H{"RackName": list})
+}
+
+//GetStatMachine get stat machine from origin api
+func (sites *Sites) GetStatMachine(rackName string, machine *[]Machine, wg *sync.WaitGroup) {
 
 	defer func() {
 		wg.Done()
@@ -100,21 +158,32 @@ func (self *Racks) GetStatMachine(rackName string, machine *[]Machine, wg *sync.
 	*machine = result
 }
 
-func (self *Racks) FetchAllRackStatus() {
+//FetchAllRackStatus update rack status
+func (sites *Sites) FetchAllRackStatus() {
 
-	allracks := self.GetAllRackName()
-	racks := make([]Rack, len(allracks))
+	allsites := sites.GetAllSiteName()
+	//allracks := sites.GetAllRackName()
+	siteArr := make([]Site, len(allsites))
 
 	var i = 0
 	wg := &sync.WaitGroup{}
 
-	for _, rackname := range allracks {
-		wg.Add(1)
-		racks[i].Name = rackname
-		go self.GetStatMachine(rackname, &racks[i].Machines, wg)
+	for _, sitename := range allsites {
+		var j = 0
+
+		siteArr[i].Name = sitename
+		racks := sites.GetRackNameBySite(sitename)
+
+		rackArr := make([]Rack, len(racks))
+
+		for _, rackname := range racks {
+			wg.Add(1)
+			go sites.GetStatMachine(rackname, &rackArr[j].Machines, wg)
+			j++
+		}
+		wg.Wait()
+		siteArr[i].Racks = rackArr
 		i++
 	}
-	wg.Wait()
-	self.Racks = racks
 
 }
