@@ -178,6 +178,7 @@ func (sites *Sites) FetchAllRackStatus() {
 
 		for _, rackname := range racks {
 			wg.Add(1)
+			rackArr[j].Name = rackname
 			go sites.GetStatMachine(rackname, &rackArr[j].Machines, wg)
 			j++
 		}
@@ -185,5 +186,5 @@ func (sites *Sites) FetchAllRackStatus() {
 		siteArr[i].Racks = rackArr
 		i++
 	}
-
+	sites.Sites = siteArr
 }
