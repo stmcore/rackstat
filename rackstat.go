@@ -11,7 +11,7 @@ import (
 
 //Sites data
 type Sites struct {
-	Site []Site
+	Sites []Site
 }
 
 //Site data
